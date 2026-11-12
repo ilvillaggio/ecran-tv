@@ -14,8 +14,8 @@
   "matchDessertSecondes": 20,
 
   "pizzaDuMoment": "stracciatella",
-  "promoTitre": "Promo",
-  "promoTexte": "Ta promo ici",
+  "promoTitre": "Test à distance",
+  "promoTexte": "Réglage envoyé à 17h03 depuis le PC ✓",
 
   "desserts": [
     { "nom": "Tiramisu Oréo",    "photo": "tiramisu-oreo",    "prix": "4,50 €" },
