@@ -13,8 +13,8 @@
 
   "defilementSecondes": 20,
   "matchDessertSecondes": 20,
-  "luminositeMilieuPhoto": 4,
-  "luminositeMilieuTexte": 4,
+  "luminositeMilieuPhoto": 2.5,
+  "luminositeMilieuTexte": 3,
 
   "pizzaDuMoment": "stracciatella",
   "promoTitre": "",
