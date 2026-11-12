@@ -1,0 +1,31 @@
+{
+  "modeAuDemarrage": "vitrine",
+
+  "vitrineDessertsSecondes": 30,
+  "vitrineDessertSecondes": 20,
+  "vitrinePizzaSecondes": 20,
+  "vitrineAfficheSecondes": 25,
+  "vitrineCarteSecondes": 40,
+
+  "sonVitrine": "playlist",
+  "volumeMusique": 100,
+
+  "defilementSecondes": 20,
+  "matchDessertSecondes": 20,
+
+  "pizzaDuMoment": "stracciatella",
+  "promoTitre": "Promo",
+  "promoTexte": "Ta promo ici",
+
+  "desserts": [
+    { "nom": "Tiramisu Oréo",    "photo": "tiramisu-oreo",    "prix": "4,50 €" },
+    { "nom": "Tiramisu Daim",    "photo": "tiramisu-daim",    "prix": "4,50 €" },
+    { "nom": "Tiramisu Nutella", "photo": "tiramisu-nutella", "prix": "4,50 €" },
+    { "nom": "Banana",           "photo": "banana",           "prix": "4,50 €" },
+    { "nom": "Fraisier",         "photo": "fraisier",         "prix": "4,50 €" }
+  ],
+
+  "affiches": ["nouveaux-desserts.jpg"],
+
+  "rechargementMinutes": 5
+}
