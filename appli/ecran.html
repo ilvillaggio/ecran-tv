@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>Il Villaggio — écran</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,700&display=swap">
+<style>
+  html, body { margin: 0; padding: 0; background: #070707; overflow: hidden; }
+  body { font-family: 'Manrope', sans-serif; color: #f4efe7; }
+  #scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #0b0a0a; overflow: hidden;
+           -webkit-transform-origin: 0 0; transform-origin: 0 0; }
+
+  /* ---- Le match (la TV dessine l'image de la box par-dessus cette zone) ---- */
+  #video { position: absolute; left: 0; top: 0; width: 1440px; height: 810px; background: #000; }
+  #apercu { position: absolute; left: 0; top: 0; width: 1440px; height: 810px; display: none;
+            background: radial-gradient(ellipse at 50% 60%, #1f4d22 0%, #0e2a12 55%, #050c06 100%); }
+  #apercu .terrain { position: absolute; left: 160px; top: 140px; width: 1120px; height: 560px; border: 3px solid rgba(255,255,255,.35); }
+  #apercu .milieu { position: absolute; left: 720px; top: 140px; width: 0; height: 560px; border-left: 3px solid rgba(255,255,255,.35); }
+  #apercu .rond { position: absolute; left: 640px; top: 340px; width: 160px; height: 160px; margin-left: -3px; border: 3px solid rgba(255,255,255,.35); border-radius: 50%; }
+  #apercu p { position: absolute; left: 0; right: 0; top: 30px; text-align: center; font-size: 26px; color: rgba(255,255,255,.75); letter-spacing: 2px; margin: 0; }
+
+  /* ---- Colonne de droite ---- */
+  #droite { position: absolute; left: 1440px; top: 0; width: 480px; height: 1080px; box-sizing: border-box;
+            background: linear-gradient(180deg, #1e150d 0%, #0c0908 38%, #0b0a0a 100%); border-left: 2px solid #2a221a; }
+  .entete { height: 150px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 0 30px; }
+  .entete img { width: 110px; height: 110px; }
+  .entete .noms { margin-left: 18px; }
+  .marque { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 44px; color: #f3ead8; line-height: 1; }
+  .sous-marque { font-weight: 600; font-size: 13px; letter-spacing: 4px; color: #c9872f; margin-top: 10px; }
+  .horloge { text-align: center; padding: 6px 0 16px; border-bottom: 1px solid #2a221a; margin: 0 30px; }
+  #heure { font-weight: 700; font-size: 64px; line-height: 1; }
+  #date { font-size: 20px; color: #b8b0a6; margin-top: 6px; }
+
+  .etiquette { font-weight: 600; font-size: 15px; letter-spacing: 4px; color: #c9872f; text-transform: uppercase; }
+  #moment { text-align: center; padding: 26px 30px 0; }
+  #moment .photo { width: 230px; height: 230px; margin: 10px auto 0; }
+  #moment .nom { font-family: 'Kaushan Script', cursive; font-size: 46px; line-height: 1.1; margin-top: 2px; }
+  #moment .ingr { font-size: 18px; color: #d6cec2; line-height: 1.45; margin-top: 8px; }
+  #moment .prix { font-weight: 700; font-size: 30px; color: #b0703a; margin-top: 10px; }
+
+  #promo { margin: 22px 30px 0; padding: 16px 20px; border: 1px solid #965227; border-radius: 16px; background: rgba(150,82,39,.12); text-align: center; }
+  #promo .texte { font-size: 22px; font-weight: 600; margin-top: 6px; line-height: 1.3; }
+
+  /* Le dessert en bas à droite (mode match) */
+  #m-dessert { position: absolute; left: 30px; right: 30px; bottom: 26px; height: 200px; box-sizing: border-box;
+               display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
+               background: #141210; border: 1px solid #211d18; border-radius: 16px; padding: 10px 20px 10px 10px;
+               -webkit-transition: opacity .8s; transition: opacity .8s; }
+  #m-dessert img { width: 180px; height: 180px; -webkit-flex-shrink: 0; flex-shrink: 0; }
+  #m-dessert .txt { margin-left: 14px; }
+  #m-dessert .nom { font-family: 'Kaushan Script', cursive; font-size: 40px; line-height: 1.1; margin-top: 6px; }
+  #m-dessert .prix { font-weight: 700; font-size: 26px; color: #b0703a; margin-top: 6px; }
+
+  /* ---- La carte qui défile en bas ---- */
+  #bas { position: absolute; left: 0; top: 810px; width: 1440px; height: 270px; box-sizing: border-box; border-top: 2px solid #2a221a;
+         background: linear-gradient(180deg, #120e0b 0%, #0b0a0a 100%); }
+  #bas .etiquette { position: absolute; left: 36px; top: 18px; }
+  #rupture { position: absolute; right: 36px; top: 18px; font-size: 15px; color: #8b847c; }
+  #cartes { position: absolute; left: 24px; right: 24px; top: 52px; bottom: 18px; display: -webkit-flex; display: flex;
+            -webkit-transition: opacity .6s; transition: opacity .6s; }
+  .carte { -webkit-flex: 1; flex: 1; margin: 0 12px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
+           background: #141210; border: 1px solid #211d18; border-radius: 16px; padding: 12px 18px 12px 12px; }
+  .carte .photo { width: 170px; height: 170px; -webkit-flex-shrink: 0; flex-shrink: 0; }
+  .carte .txt { margin-left: 16px; -webkit-flex: 1; flex: 1; }
+  .carte .nom { font-family: 'Kaushan Script', cursive; font-size: 36px; line-height: 1.1; }
+  .carte .ingr { font-size: 18px; color: #d6cec2; line-height: 1.4; margin-top: 6px; }
+  .carte .prix { font-weight: 700; font-size: 24px; color: #b0703a; margin-top: 8px; }
+
+  /* Photo ronde fondue dans le fond (comme sur l'appli de commande) */
+  .photo { border-radius: 50%; background-size: cover; background-position: center;
+           -webkit-mask-image: radial-gradient(circle closest-side, #000 80%, transparent 92%); }
+  .photo.sans { background: radial-gradient(circle, #2a1d12 0%, #160f0a 70%); display: -webkit-flex; display: flex;
+                -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
+                font-family: 'Kaushan Script', cursive; font-size: 72px; color: #c9872f; -webkit-mask-image: none; }
+
+  /* ================= MODE VITRINE (plein écran, sans la TV) ================= */
+  #vitrine { display: none; position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+             background: radial-gradient(ellipse at 30% 60%, #1e150d 0%, #0b0a0a 62%); }
+  .mode-vitrine #vitrine { display: block; }
+  .mode-vitrine #video, .mode-vitrine #apercu, .mode-vitrine #bas, .mode-vitrine #droite { display: none !important; }
+
+  #v-haut { position: absolute; left: 0; top: 0; width: 1920px; height: 130px; box-sizing: border-box; padding: 0 60px;
+            display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; border-bottom: 1px solid #2a221a; }
+  #v-haut img { width: 92px; height: 92px; }
+  #v-haut .noms { margin-left: 20px; -webkit-flex: 1; flex: 1; }
+  #v-haut .marque { font-size: 52px; }
+  #v-haut .heure { text-align: right; }
+  #v-heure { font-weight: 700; font-size: 54px; line-height: 1; }
+  #v-date { font-size: 20px; color: #b8b0a6; margin-top: 4px; }
+
+  .diapo { position: absolute; left: 0; top: 131px; width: 1920px; height: 949px; opacity: 0;
+           -webkit-transition: opacity .8s; transition: opacity .8s; }
+  .diapo.visible { opacity: 1; }
+
+  /* Une pizza en grand */
+  #d-vedette .photo { position: absolute; left: 110px; top: 60px; width: 820px; height: 820px; }
+  #d-vedette .photo.sans { font-size: 300px; }
+  #d-vedette .txt { position: absolute; left: 1010px; right: 90px; top: 0; bottom: 0;
+                    display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column;
+                    -webkit-justify-content: center; justify-content: center; }
+  #d-vedette .etiquette { font-size: 22px; }
+  #d-vedette .nom { font-family: 'Kaushan Script', cursive; font-size: 124px; line-height: 1.1; margin-top: 10px; }
+  #d-vedette .ingr { font-size: 32px; color: #d6cec2; line-height: 1.5; margin-top: 18px; }
+  #d-vedette .prix { font-weight: 700; font-size: 68px; color: #b0703a; margin-top: 26px; }
+  /* Un dessert en grand */
+  #d-dessert img { position: absolute; left: 130px; top: 50px; width: 840px; height: 840px; }
+  #d-dessert .txt { position: absolute; left: 1040px; right: 90px; top: 0; bottom: 0;
+                    display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column;
+                    -webkit-justify-content: center; justify-content: center; }
+  #d-dessert .etiquette { font-size: 22px; }
+  #d-dessert .nom { font-family: 'Kaushan Script', cursive; font-size: 124px; line-height: 1.1; margin-top: 10px; }
+  #d-dessert .prix { font-weight: 700; font-size: 68px; color: #b0703a; margin-top: 26px; }
+  #d-dessert .phrase { font-size: 32px; color: #b8b0a6; margin-top: 22px; }
+
+  /* La carte complète */
+  #d-carte { display: -webkit-flex; display: flex; box-sizing: border-box; padding: 40px 50px 0; }
+  .colonne { -webkit-flex: 1; flex: 1; margin: 0 30px; }
+  .colonne .etiquette { font-size: 22px; padding-bottom: 14px; border-bottom: 1px solid #2a221a; margin-bottom: 8px; }
+  .ligne { padding: 12px 0; }
+  .ligne .haut { display: -webkit-flex; display: flex; -webkit-align-items: baseline; align-items: baseline; }
+  .ligne .nom { font-family: 'Kaushan Script', cursive; font-size: 40px; line-height: 1.1; }
+  .ligne .points { -webkit-flex: 1; flex: 1; border-bottom: 2px dotted #3a3028; margin: 0 14px; }
+  .ligne .prix { font-weight: 700; font-size: 30px; color: #b0703a; }
+  .ligne .ingr { font-size: 21px; color: #d6cec2; line-height: 1.35; margin-top: 2px; }
+  .ligne.epuise { opacity: .4; }
+  .ligne .badge { font-size: 16px; font-weight: 600; letter-spacing: 1px; color: #e8b873; margin-left: 12px; }
+
+  /* Commander en ligne */
+  #d-qr { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center;
+          -webkit-justify-content: center; justify-content: center; }
+  #d-qr img { width: 480px; height: 480px; border-radius: 24px; }
+  #d-qr .txt { margin-left: 80px; width: 900px; }
+  #d-qr .titre { font-family: 'Kaushan Script', cursive; font-size: 96px; line-height: 1.1; white-space: nowrap; }
+  #d-qr .detail { font-size: 36px; color: #b8b0a6; line-height: 1.45; margin-top: 20px; }
+  #d-qr .promo { margin-top: 40px; padding: 22px 30px; border: 1px solid #965227; border-radius: 16px; background: rgba(150,82,39,.12); }
+  #d-qr .promo .texte { font-size: 34px; font-weight: 600; margin-top: 8px; }
+
+  /* Nos desserts */
+  #d-desserts { text-align: center; }
+  #d-desserts .titre { font-family: 'Kaushan Script', cursive; font-size: 96px; margin-top: 50px; line-height: 1.1; }
+  #d-desserts .rangee { display: -webkit-flex; display: flex; -webkit-justify-content: center; justify-content: center; margin-top: 60px; }
+  #d-desserts .pot { width: 340px; margin: 0 8px; }
+  #d-desserts .pot img { width: 320px; height: 320px; }
+  #d-desserts .pot .nom { font-family: 'Kaushan Script', cursive; font-size: 40px; margin-top: 14px; line-height: 1.1; }
+  #d-desserts .pot .prix { font-weight: 700; font-size: 32px; color: #b0703a; margin-top: 8px; }
+  #d-desserts .bas { font-size: 30px; color: #b8b0a6; margin-top: 50px; }
+
+  /* Une affiche en plein écran */
+  #d-affiche img { position: absolute; left: 490px; top: 4px; width: 940px; height: 940px; }
+
+  #journal { position: absolute; left: 12px; top: 8px; font-size: 18px; color: #f66; display: none; }
+  /* Le nom de l'entrée montrée en mode match (HDMI 1, HDMI 2…), quelques secondes après un changement */
+  #entree { position: absolute; left: 24px; top: 24px; padding: 10px 22px; border-radius: 12px; background: rgba(0,0,0,.75);
+            color: #fff; font-size: 30px; font-weight: 600; display: none; }
+</style>
+</head>
+<body>
+<div id="scene">
+  <div id="video"></div>
+  <div id="apercu"><div class="terrain"></div><div class="milieu"></div><div class="rond"></div>
+    <p>APERÇU — ICI, SUR LA TV : L'IMAGE DE LA BOX SFR (LE MATCH)</p></div>
+
+  <div id="bas">
+    <div class="etiquette">À la carte ce soir</div>
+    <div id="rupture"></div>
+    <div id="cartes"></div>
+  </div>
+
+  <div id="droite">
+    <div class="entete">
+      <img src="img/logo.png" alt="">
+      <div class="noms"><div class="marque">Il Villaggio</div><div class="sous-marque">PIZZERIA ARTISANALE</div></div>
+    </div>
+    <div class="horloge"><div id="heure">--:--</div><div id="date"></div></div>
+    <div id="moment"></div>
+    <div id="promo"><div class="etiquette" id="promo-titre"></div><div class="texte" id="promo-texte"></div></div>
+    <div id="m-dessert"></div>
+  </div>
+  <div id="vitrine">
+    <div id="v-haut">
+      <img src="img/logo.png" alt="">
+      <div class="noms"><div class="marque">Il Villaggio</div><div class="sous-marque">PIZZERIA ARTISANALE</div></div>
+      <div class="heure"><div id="v-heure">--:--</div><div id="v-date"></div></div>
+    </div>
+    <div class="diapo" id="d-vedette"></div>
+    <div class="diapo" id="d-carte"></div>
+    <div class="diapo" id="d-dessert"></div>
+    <div class="diapo" id="d-desserts"></div>
+    <div class="diapo" id="d-affiche"></div>
+  </div>
+  <div id="journal"></div>
+  <div id="entree"></div>
+</div>
+<script src="reglages.js"></script>
+<script src="cle.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
