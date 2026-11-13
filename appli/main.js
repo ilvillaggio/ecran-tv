@@ -193,6 +193,7 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
     if (!EN_LIGNE) return;
     lire('', function (r) {
       if (!r || typeof r !== 'object') return;
+      var sonAvant = cleSon();
       // Nouvelle version de l'écran publiée en ligne (versionAppli changée) : on relance pour la prendre.
       if (r.versionAppli != null) {
         if (versionVue === null) versionVue = r.versionAppli;
@@ -206,6 +207,7 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
       recuEnLigne = true;
       try { localStorage.setItem('ilv_reglages', JSON.stringify(r)); } catch (e) {}
       if (lecteur) lecteur.volume = volume();
+      if (cleSon() !== sonAvant && mode === 'vitrine') appliquerMode();   // musique, radio ou son de la box changés à distance
       // Si la prise de la box a été changée à distance, on y va tout de suite.
       if (sources.length) { var avant = position; if (placerEntree() && position !== avant) montrerSource(); }
       textes();
@@ -528,31 +530,53 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
   }
 
   /* ================= Passer d'un mode à l'autre ================= */
-  // ---- Musique à soi (réglage sonVitrine: 'playlist') : les fichiers du dossier musique/, en boucle ----
-  var lecteur = null, morceau = 0;
+  // ---- La musique de la vitrine (réglage sonVitrine) ----
+  //   'playlist' : les morceaux de « musiques » (un nom = un fichier du dossier musique/, ou une adresse internet), en boucle ;
+  //   'radio'    : la radio internet à l'adresse « radio ». Si elle ne répond pas 3 fois de suite : la playlist à la place.
+  // Un changement de ces réglages reçu d'internet change la musique tout de suite (sans réinstaller).
+  var lecteur = null, ecoute = '';   // ecoute : les réglages avec lesquels le lecteur a été fait
+  function cleSon() { return R.sonVitrine + '|' + (R.sonVitrine === 'radio' ? R.radio || '' : '') + '|' + (R.musiques || []).join('|'); }
+  function adresseSon(nom) { return /^https?:/.test(nom) ? nom : 'musique/' + nom; }
+  function arreterMusique() {
+    if (!lecteur) return;
+    var l = lecteur; lecteur = null;
+    try { l.pause(); l.removeAttribute('src'); l.load(); } catch (e) {}
+  }
+  function creerLecteur(liste, radio) {
+    var l = new Audio(), morceau = 0, pannes = 0, auHasard = !radio;
+    lecteur = l;
+    l.volume = volume();
+    function actif() { return lecteur === l; }   // un ancien lecteur remplacé ne fait plus rien
+    function jouer(n) { morceau = n % liste.length; l.src = adresseSon(liste[morceau]); lancer(); }
+    l.onended = function () { if (actif()) jouer(radio ? 0 : morceau + 1); };   // radio coupée : on se reconnecte
+    l.onplaying = function () { pannes = 0; };
+    // Au tout premier morceau (pas pour la radio), on part d'un endroit au hasard.
+    l.onloadedmetadata = function () {
+      if (!auHasard) return;
+      auHasard = false;
+      if (isFinite(l.duration) && l.duration > 600) l.currentTime = Math.floor(Math.random() * (l.duration - 300));
+    };
+    // Sur la TV, le lecteur signale parfois une erreur passagère : rien n'est montré aux clients, on relance.
+    l.onerror = function () {
+      if (!actif()) return;
+      pannes++;
+      if (radio && pannes >= 3 && (R.musiques || []).length) {   // la radio ne répond pas : notre playlist
+        arreterMusique();
+        creerLecteur(R.musiques, false);
+        return;
+      }
+      setTimeout(function () { if (actif()) jouer(radio ? 0 : morceau + 1); }, radio ? 10000 : 3000);
+    };
+    l.src = adresseSon(liste[0]);
+  }
   function musique(jouer) {
-    var liste = R.musiques || [];
-    if (R.sonVitrine !== 'playlist' || !liste.length) return;
+    var cle = cleSon();
+    if (lecteur && cle !== ecoute) arreterMusique();   // les réglages du son ont changé
     if (!lecteur) {
-      lecteur = new Audio();
-      lecteur.volume = volume();
-      var suivant = function () {
-        morceau = (morceau + 1) % liste.length;
-        lecteur.src = 'musique/' + liste[morceau];
-        lancer();
-      };
-      lecteur.onended = suivant;
-      // Au tout premier chargement, on part d'un endroit au hasard dans le morceau.
-      var auHasard = true;
-      lecteur.onloadedmetadata = function () {
-        if (!auHasard) return;
-        auHasard = false;
-        if (lecteur.duration > 600) lecteur.currentTime = Math.floor(Math.random() * (lecteur.duration - 300));
-      };
-      // Sur la TV, le lecteur signale parfois une erreur passagère alors que la musique repart :
-      // on ne l'affiche pas aux clients, on relance simplement le morceau 3 secondes plus tard.
-      lecteur.onerror = function () { setTimeout(suivant, 3000); };
-      lecteur.src = 'musique/' + liste[0];
+      ecoute = cle;
+      if (R.sonVitrine === 'radio' && R.radio) creerLecteur([R.radio], true);
+      else if ((R.sonVitrine === 'playlist' || R.sonVitrine === 'radio') && (R.musiques || []).length) creerLecteur(R.musiques, false);
+      else return;
     }
     if (jouer) lancer(); else lecteur.pause();
   }

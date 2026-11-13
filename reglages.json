@@ -9,6 +9,7 @@
   "vitrineCarteSecondes": 40,
 
   "sonVitrine": "playlist",
+  "radio": "https://icecast.radiofrance.fr/fipreggae-midfi.mp3",
   "volumeMusique": 40,
 
   "defilementSecondes": 20,
@@ -18,7 +19,7 @@
 
   "carteCodart": "il-villaggio",
   "momentDepuisCaisse": true,
-  "versionAppli": 3,
+  "versionAppli": 4,
   "pizzaDuMoment": "stracciatella",
   "promoTitre": "",
   "promoTexte": "",
