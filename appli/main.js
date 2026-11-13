@@ -243,12 +243,18 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
   }
 
   /* ================= MODE MATCH ================= */
-  function montrerMoment() {
-    var code = R.pizzaDuMoment, item, bloc = $('moment'), c;
-    // La pizza « mise en avant » dans la caisse CODART passe en premier (réglage momentDepuisCaisse).
+  // Le code de la pizza du moment : celle « mise en avant » dans la caisse CODART (réglage momentDepuisCaisse),
+  // sinon celle des réglages.
+  function codeDuMoment() {
+    var code = R.pizzaDuMoment, c;
     if (R.momentDepuisCaisse !== false && menuBrut) {
       for (c in menuBrut) if (menuBrut.hasOwnProperty(c) && menuBrut[c] && menuBrut[c].enAvant && /^base_/.test(menuBrut[c].category)) { code = c; break; }
     }
+    return code;
+  }
+
+  function montrerMoment() {
+    var code = codeDuMoment(), item, bloc = $('moment');
     item = menuBrut && menuBrut[code];
     if (!item || !item.active) { bloc.style.display = 'none'; return; }
     bloc.style.display = 'block';
@@ -367,23 +373,30 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
       { titre: 'Base crème', cats: { base_creme: 1 } },
       { titre: 'Base tomate', cats: { base_tomate: 1 } },
       { titre: 'Douceurs', cats: { pizza_dessert: 1, desserts: 1 } }
-    ], html = '', c, i, p;
+    ], html = '', c, i, p, moment = codeDuMoment(), pm = null;
+    // Une ligne de la carte (pizza ou dessert).
+    function ligne(p) {
+      return '<div class="ligne' + (p.dispo ? '' : ' epuise') + '"><div class="haut">' +
+        '<span class="nom">' + echapper(p.name) + '</span>' +
+        (p.dispo ? '' : '<span class="badge">victime de son succès</span>') +
+        '<span class="points"></span><span class="prix">' + prix(p.price) + '</span></div>' +
+        (p.category === 'desserts' ? '' : '<div class="ingr">' + echapper(ingredients(p)) + '</div>') + '</div>';
+    }
     for (c = 0; c < colonnes.length; c++) {
       html += '<div class="colonne"><div class="etiquette">' + colonnes[c].titre + '</div>';
       for (i = 0; i < carte.length; i++) {
         p = carte[i];
         if (!colonnes[c].cats[p.category]) continue;
-        html += '<div class="ligne' + (p.dispo ? '' : ' epuise') + '"><div class="haut">' +
-          '<span class="nom">' + echapper(p.name) + '</span>' +
-          (p.dispo ? '' : '<span class="badge">victime de son succès</span>') +
-          '<span class="points"></span><span class="prix">' + prix(p.price) + '</span></div>' +
-          (p.category === 'desserts' ? '' : '<div class="ingr">' + echapper(ingredients(p)) + '</div>') + '</div>';
+        // La pizza du moment ne reste pas dans sa colonne : elle va en bas des Douceurs (sinon la colonne déborde).
+        if (p.code === moment && /^base_/.test(p.category)) { pm = p; continue; }
+        html += ligne(p);
       }
       if (colonnes[c].titre === 'Douceurs') {
         for (i = 0; i < (R.desserts || []).length; i++) {
           html += '<div class="ligne"><div class="haut"><span class="nom">' + echapper(R.desserts[i].nom) + '</span>' +
             '<span class="points"></span><span class="prix">' + echapper(R.desserts[i].prix) + '</span></div></div>';
         }
+        if (pm) html += '<div class="etiquette moment">La pizza du moment</div>' + ligne(pm);
       }
       html += '</div>';
     }
