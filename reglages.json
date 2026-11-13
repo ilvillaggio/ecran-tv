@@ -16,6 +16,8 @@
   "luminositeMilieuPhoto": 1.15,
   "luminositeMilieuTexte": 2,
 
+  "carteCodart": "il-villaggio",
+  "momentDepuisCaisse": true,
   "pizzaDuMoment": "stracciatella",
   "promoTitre": "",
   "promoTexte": "",
