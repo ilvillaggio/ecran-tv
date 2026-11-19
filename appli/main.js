@@ -72,10 +72,31 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
   }
 
   /* ---------- Heure ---------- */
+  // L'horloge de la TV peut se dérégler : on prend l'heure exacte donnée par la caisse CODART à chaque
+  // lecture de la carte (toutes les 5 min), et on calcule nous-mêmes l'heure de Paris (été / hiver).
+  // Sans aucune réponse d'internet depuis l'installation : l'heure de la TV, comme avant.
+  var ecartHeure = null;   // heure d'internet moins heure de la TV, en millisecondes
+  try { var e0 = parseFloat(localStorage.getItem('ilv_ecart_heure')); if (!isNaN(e0)) ecartHeure = e0; } catch (e) {}
+  function noterHeure(x) {
+    var t = Date.parse(x.getResponseHeader('Date') || '');
+    if (isNaN(t)) return;
+    ecartHeure = t + 500 - new Date().getTime();   // l'heure reçue est arrondie à la seconde
+    try { localStorage.setItem('ilv_ecart_heure', String(ecartHeure)); } catch (e) {}
+    horloge();
+  }
+  function maintenant() {
+    var t = new Date();
+    if (ecartHeure === null) return { h: t.getHours(), m: t.getMinutes(), js: t.getDay(), j: t.getDate(), mo: t.getMonth() };
+    var u = t.getTime() + ecartHeure, an = new Date(u).getUTCFullYear();
+    // Heure d'été : du dernier dimanche de mars au dernier dimanche d'octobre, à 1 h (heure universelle).
+    var dimanche = function (mois) { var d = new Date(Date.UTC(an, mois + 1, 0, 1)); return d.getTime() - d.getUTCDay() * 86400000; };
+    var p = new Date(u + (u >= dimanche(2) && u < dimanche(9) ? 2 : 1) * 3600000);
+    return { h: p.getUTCHours(), m: p.getUTCMinutes(), js: p.getUTCDay(), j: p.getUTCDate(), mo: p.getUTCMonth() };
+  }
   function horloge() {
-    var d = new Date();
-    var h = deux(d.getHours()) + ':' + deux(d.getMinutes());
-    var j = JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()];
+    var d = maintenant();
+    var h = deux(d.h) + ':' + deux(d.m);
+    var j = JOURS[d.js] + ' ' + d.j + ' ' + MOIS[d.mo];
     $('heure').textContent = h; $('date').textContent = j;
     $('v-heure').textContent = h; $('v-date').textContent = j;
   }
@@ -133,6 +154,7 @@ window.ILV_PARTI = true;  // pour le lanceur (index.html) : le code a commencé
     x.setRequestHeader('apikey', CODART_CLE);
     x.setRequestHeader('Authorization', 'Bearer ' + CODART_CLE);
     x.onload = function () {
+      try { noterHeure(x); } catch (e) {}
       if (x.status !== 200) return ko('caisse : réponse ' + x.status);
       var liste;
       try { liste = JSON.parse(x.responseText); } catch (e) { return ko('caisse : lecture impossible'); }
